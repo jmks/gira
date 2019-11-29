@@ -21,3 +21,7 @@ Currently requires the following environment variables to be set up:
 | GIRA_JIRA_TOKEN         | Jira API TOKEN                                                                                                        |
 | GIRA_JIRA_USER          | User of the Jira API token e.g. an email address                                                                      |
 | GIRA_JIRA_URL           | Jira base URL e.g. https://issues.apache.org/jira/                                                                    |
+
+## License
+
+This project is released under the terms of the [MIT license](http://en.wikipedia.org/wiki/MIT_License).
