@@ -40,7 +40,12 @@ func main() {
 		os.Getenv(jiraUrlEnv),
 	)
 
-	branches, err := findGitBranches()
+	repo, err := gitRepository()
+	if err != nil {
+		fmt.Printf("Git problem: %s", err)
+		os.Exit(1)
+	}
+	branches, err := getBranches(repo)
 	if err != nil {
 		fmt.Printf("Git problem: %s", err)
 		os.Exit(1)
@@ -49,14 +54,14 @@ func main() {
 	err = addBranchStatusFromJira(branches, config)
 	if err != nil {
 		fmt.Printf("Error requesting Jira informtion: %s", err)
+		os.Exit(1)
 	}
 
 	showUserSelection(branches)
-
-	for _, branch := range branches {
-		if branch.SelectedForDelete {
-			fmt.Println(branch.DisplayName())
-		}
+	err = deleteSelectedBranches(repo, branches)
+	if err != nil {
+		fmt.Printf("Error deleting branch(es): %s", err)
+		os.Exit(1)
 	}
 }
 
@@ -73,7 +78,7 @@ func (c Config) HasJira() bool {
 	return c.jiraToken != "" && c.jiraUser != "" && c.jiraURL != ""
 }
 
-func findGitBranches() ([]*Branch, error) {
+func gitRepository() (*git.Repository, error) {
 	dir, err := os.Getwd()
 	if err != nil {
 		return nil, err
@@ -84,6 +89,10 @@ func findGitBranches() ([]*Branch, error) {
 		return nil, err
 	}
 
+	return repo, nil
+}
+
+func getBranches(repo *git.Repository) ([]*Branch, error) {
 	iter, err := repo.Branches()
 	if err != nil {
 		return nil, err
@@ -227,4 +236,17 @@ func newStatusCell(status string) *tview.TableCell {
 	return tview.NewTableCell(status).
 		SetTextColor(color).
 		SetAlign(tview.AlignLeft)
+}
+
+func deleteSelectedBranches(repo *git.Repository, branches []*Branch) error {
+	for _, branch := range branches {
+		if branch.SelectedForDelete {
+			err := repo.Storer.RemoveReference(branch.Name)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
