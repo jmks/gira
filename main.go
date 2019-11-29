@@ -147,7 +147,7 @@ func (b Branch) jiraIssueKey(pattern string) string {
 }
 
 func (b Branch) DisplayName() string {
-	return strings.TrimLeft(b.Name.String(), gitBranchRefPrefix)
+	return strings.TrimPrefix(b.Name.String(), gitBranchRefPrefix)
 }
 
 func showUserSelection(branches []*Branch) {

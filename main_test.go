@@ -27,3 +27,16 @@ func TestConfiguration(t *testing.T) {
 		}
 	})
 }
+
+func TestBranch(t *testing.T) {
+	t.Run("DisplayName hides the refs/heads/ prefix", func(t *testing.T) {
+		branch := Branch{Name: "refs/heads/helpful-branch-name"}
+
+		want := "helpful-branch-name"
+		got := branch.DisplayName()
+
+		if got != want {
+			t.Errorf("Expected display name to be %s, but was %s", want, got)
+		}
+	})
+}
