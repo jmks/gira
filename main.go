@@ -12,11 +12,19 @@ import (
 	"strings"
 )
 
+const jiraIssuePatternEnv = "GIRA_JIRA_ISSUE_PATTERN"
 const jiraTokenEnv = "GIRA_JIRA_TOKEN"
 const jiraUserEnv = "GIRA_JIRA_USER"
 const jiraUrlEnv = "GIRA_JIRA_URL"
-const jiraIssuePatternEnv = "GIRA_JIRA_ISSUE_PATTERN"
+
 const gitBranchRefPrefix = "refs/heads/"
+
+type Config struct {
+	issuePattern string
+	jiraToken    string
+	jiraUser     string
+	jiraURL      string
+}
 
 type Branch struct {
 	Name              plumbing.ReferenceName
@@ -25,31 +33,60 @@ type Branch struct {
 }
 
 func main() {
-	branches := findGitBranches()
-	addBranchStatusFromJira(branches)
+	config := newConfig(
+		os.Getenv(jiraIssuePatternEnv),
+		os.Getenv(jiraTokenEnv),
+		os.Getenv(jiraUserEnv),
+		os.Getenv(jiraUrlEnv),
+	)
+
+	branches, err := findGitBranches()
+	if err != nil {
+		fmt.Printf("Git problem: %s", err)
+		os.Exit(1)
+	}
+
+	err = addBranchStatusFromJira(branches, config)
+	if err != nil {
+		fmt.Printf("Error requesting Jira informtion: %s", err)
+	}
 
 	showUserSelection(branches)
+
+	for _, branch := range branches {
+		if branch.SelectedForDelete {
+			fmt.Println(branch.DisplayName())
+		}
+	}
 }
 
-func findGitBranches() []*Branch {
+func newConfig(issuePattern, jiraToken, jiraUser, jiraURL string) *Config {
+	return &Config{
+		issuePattern: issuePattern,
+		jiraToken:    jiraToken,
+		jiraUser:     jiraUser,
+		jiraURL:      jiraURL,
+	}
+}
+
+func (c Config) HasJira() bool {
+	return c.jiraToken != "" && c.jiraUser != "" && c.jiraURL != ""
+}
+
+func findGitBranches() ([]*Branch, error) {
 	dir, err := os.Getwd()
 	if err != nil {
-		fmt.Println("Could not open current directory!")
-		fmt.Println(err)
-		os.Exit(1)
+		return nil, err
 	}
 
 	repo, err := git.PlainOpen(dir)
 	if err != nil {
-		fmt.Println("Are you working in a git directory?")
-		os.Exit(1)
+		return nil, err
 	}
 
 	iter, err := repo.Branches()
 	if err != nil {
-		fmt.Println("Could not read branches:")
-		fmt.Println(err)
-		os.Exit(1)
+		return nil, err
 	}
 
 	branches := []*Branch{}
@@ -62,45 +99,55 @@ func findGitBranches() []*Branch {
 		return nil
 	})
 
-	return branches
+	return branches, nil
 }
 
-func addBranchStatusFromJira(branches []*Branch) {
-	basicAuth := jira.BasicAuthTransport{
-		Username: os.Getenv(jiraUserEnv),
-		Password: os.Getenv(jiraTokenEnv),
+func addBranchStatusFromJira(branches []*Branch, config *Config) error {
+	if !config.HasJira() {
+		return nil
 	}
 
-	client, err := jira.NewClient(basicAuth.Client(), os.Getenv(jiraUrlEnv))
+	basicAuth := jira.BasicAuthTransport{
+		Username: config.jiraUser,
+		Password: config.jiraToken,
+	}
+
+	client, err := jira.NewClient(basicAuth.Client(), config.jiraURL)
 	if err != nil {
-		fmt.Println("Error creating client")
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 
 	for _, branch := range branches {
-		key := branch.jiraIssueKey(os.Getenv(jiraIssuePatternEnv))
+		if config.issuePattern == "" {
+			continue
+		}
+
+		key := branch.jiraIssueKey(config.issuePattern)
 		if key == "" {
 			continue
 		}
 
 		issue, _, err := client.Issue.Get(key, &jira.GetQueryOptions{})
 		if err != nil {
-			fmt.Printf("Error finding issue for %s\n", key)
-			fmt.Println(err)
+			return err
 		}
 
 		branch.JiraStatus = issue.Fields.Status.Name
 	}
+
+	return nil
 }
 
-// TODO: how to make regexp configurable and safe?
 func (b Branch) jiraIssueKey(pattern string) string {
 	re := regexp.MustCompile(pattern)
 
 	found := re.Find([]byte(b.Name.String()))
 
 	return string(found)
+}
+
+func (b Branch) DisplayName() string {
+	return strings.TrimLeft(b.Name.String(), gitBranchRefPrefix)
 }
 
 func showUserSelection(branches []*Branch) {
@@ -116,7 +163,7 @@ func showUserSelection(branches []*Branch) {
 		selectionCell := tview.NewTableCell(getSelectedText(branch.SelectedForDelete)).
 			SetTextColor(getSelectedTextColor(branch.SelectedForDelete)).
 			SetAlign(tview.AlignLeft)
-		branchCell := tview.NewTableCell(branch.Name.String()).
+		branchCell := tview.NewTableCell(branch.DisplayName()).
 			SetTextColor(tcell.ColorWhite).
 			SetAlign(tview.AlignLeft).
 			SetExpansion(1)
