@@ -2,6 +2,8 @@
 
 A tool for managing *GI*t branches with ji*RA*.
 
+Pronounced "gear-ra" (g like "git" or "gif" :trollface:)
+
 ## Description
 
 I frequently have many feature branches. However, CI/Github actions may rebase the feature branch before it is merged to mainline.
