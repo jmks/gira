@@ -165,6 +165,7 @@ func (b Branch) DisplayName() string {
 
 func showUserSelection(branches []*Branch) bool {
 	userCancelled := true
+
 	app := tview.NewApplication()
 
 	table := tview.NewTable().
@@ -198,9 +199,13 @@ func showUserSelection(branches []*Branch) bool {
 		updateSelectedCell(table.GetCell(row, 0), branches[row].SelectedForDelete)
 	})
 
-	frame := tview.NewFrame(table).
+	frame := tview.
+		NewFrame(table).
 		SetBorders(2, 2, 2, 2, 4, 4).
-		AddText("Select branches to delete with <enter>", true, tview.AlignCenter, tcell.ColorWhite)
+		AddText("gira: Select branches to delete", true, tview.AlignCenter, tcell.ColorWhite).
+		AddText("<ctrl-c>: immediately quit", false, tview.AlignCenter, tcell.ColorWhite).
+		AddText("<esc>: quit and delete", false, tview.AlignCenter, tcell.ColorWhite).
+		AddText("<enter>: (de)select", false, tview.AlignCenter, tcell.ColorWhite)
 
 	if err := app.SetRoot(frame, true).SetFocus(frame).Run(); err != nil {
 		panic(err)
