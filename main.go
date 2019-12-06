@@ -5,6 +5,7 @@ import (
 	"github.com/andygrunwald/go-jira"
 	"github.com/gdamore/tcell"
 	"github.com/rivo/tview"
+	"github.com/spf13/viper"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"os"
@@ -12,10 +13,11 @@ import (
 	"strings"
 )
 
-const jiraIssuePatternEnv = "GIRA_JIRA_ISSUE_PATTERN"
-const jiraTokenEnv = "GIRA_JIRA_TOKEN"
-const jiraUserEnv = "GIRA_JIRA_USER"
-const jiraUrlEnv = "GIRA_JIRA_URL"
+const giraEnvPrefix = "GIRA"
+const jiraIssuePatternEnv = "JIRA_ISSUE_PATTERN"
+const jiraTokenEnv = "JIRA_TOKEN"
+const jiraUserEnv = "JIRA_USER"
+const jiraUrlEnv = "JIRA_URL"
 
 const gitBranchRefPrefix = "refs/heads/"
 
@@ -33,12 +35,7 @@ type Branch struct {
 }
 
 func main() {
-	config := newConfig(
-		os.Getenv(jiraIssuePatternEnv),
-		os.Getenv(jiraTokenEnv),
-		os.Getenv(jiraUserEnv),
-		os.Getenv(jiraUrlEnv),
-	)
+	config := readConfiguration()
 
 	repo, err := gitRepository()
 	if err != nil {
@@ -54,7 +51,6 @@ func main() {
 	err = addBranchStatusFromJira(branches, config)
 	if err != nil {
 		fmt.Printf("Error requesting Jira informtion: %s", err)
-		os.Exit(1)
 	}
 
 	cancelled := showUserSelection(branches)
@@ -69,13 +65,35 @@ func main() {
 	}
 }
 
-func newConfig(issuePattern, jiraToken, jiraUser, jiraURL string) *Config {
+func readConfiguration() *Config {
+	viper.SetDefault(withGiraPrefix(jiraIssuePatternEnv), "")
+	viper.SetDefault(withGiraPrefix(jiraTokenEnv), "")
+	viper.SetDefault(withGiraPrefix(jiraUserEnv), "")
+	viper.SetDefault(withGiraPrefix(jiraUrlEnv), "")
+
+	viper.SetEnvPrefix(giraEnvPrefix)
+	viper.BindEnv(jiraIssuePatternEnv)
+	viper.BindEnv(jiraTokenEnv)
+	viper.BindEnv(jiraUserEnv)
+	viper.BindEnv(jiraUrlEnv)
+
+	viper.SetConfigType("toml")
+	viper.SetConfigName(".gira")
+	viper.AddConfigPath(".")
+	viper.AddConfigPath("$HOME/")
+
+	viper.ReadInConfig()
+
 	return &Config{
-		issuePattern: issuePattern,
-		jiraToken:    jiraToken,
-		jiraUser:     jiraUser,
-		jiraURL:      jiraURL,
+		issuePattern: viper.GetString(jiraIssuePatternEnv),
+		jiraToken:    viper.GetString(jiraTokenEnv),
+		jiraUser:     viper.GetString(jiraUserEnv),
+		jiraURL:      viper.GetString(jiraUrlEnv),
 	}
+}
+
+func withGiraPrefix(s string) string {
+	return giraEnvPrefix + "_" + s
 }
 
 func (c Config) HasJira() bool {
