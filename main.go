@@ -72,7 +72,7 @@ func readConfiguration() *Config {
 	viper.SetConfigType("toml")
 	viper.SetConfigName(".gira")
 	viper.AddConfigPath(".")
-	viper.AddConfigPath("$HOME/")
+	viper.AddConfigPath("$HOME/.config/")
 
 	viper.ReadInConfig()
 
