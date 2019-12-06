@@ -9,6 +9,7 @@ import (
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"os"
+	"os/exec"
 	"regexp"
 	"strings"
 )
@@ -52,6 +53,8 @@ func main() {
 	default:
 		fmt.Printf("Unknown command '%s'\n", command)
 	}
+
+	os.Exit(0)
 }
 
 func readConfiguration() *Config {
@@ -90,12 +93,12 @@ func (c Config) HasJira() bool {
 }
 
 func createLocalBranchFromJiraIssue(config *Config) {
-	jiraTicket := ""
+	issueKey := ""
 	if len(os.Args) >= 3 {
-		jiraTicket = os.Args[2]
+		issueKey = os.Args[2]
 	}
 
-	if jiraTicket == "" {
+	if issueKey == "" {
 		fmt.Println("The branch command requires a Jira issue key")
 		os.Exit(1)
 	}
@@ -105,7 +108,59 @@ func createLocalBranchFromJiraIssue(config *Config) {
 		os.Exit(1)
 	}
 
-	fmt.Printf("TODO: create branj for jira issue %s\n", jiraTicket)
+	title, _, err := fetchJiraInfo(issueKey, config)
+	if err != nil {
+		fmt.Printf("Error fetching issue %s from Jira: %s\n", issueKey, err)
+	}
+
+	delimiter := "-"
+	nonChars := regexp.MustCompile("[^A-Za-z0-9]")
+	normalizedTitle := nonChars.ReplaceAllLiteralString(title, delimiter)
+	branchName := issueKey + delimiter + strings.ReplaceAll(strings.ToLower(normalizedTitle), " ", delimiter)
+
+	repo, err := gitRepository()
+	if err != nil {
+		fmt.Printf("Git problem: %s", err)
+		os.Exit(1)
+	}
+
+	headRef, err := repo.Head()
+	if err != nil {
+		fmt.Printf("Git problem: %s", err)
+		os.Exit(1)
+	}
+
+	newBranchRefName := plumbing.NewBranchReferenceName(branchName)
+	newRef := plumbing.NewHashReference(newBranchRefName, headRef.Hash())
+	err = repo.Storer.SetReference(newRef)
+	if err != nil {
+		fmt.Printf("Git problem: %s", err)
+	}
+
+	// This currently hangs the app
+	// Seems like a go-git bug
+	//
+	// worktree, err := repo.Worktree()
+	// if err != nil {
+	// 	fmt.Printf("Git problem: %s", err)
+	// }
+
+	// fmt.Println("Starting checkout...")
+
+	// err = worktree.Checkout(&git.CheckoutOptions{
+	// 	Branch: newBranchRefName,
+	// })
+
+	// fmt.Println("Done checkout...")
+	// if err != nil {
+	// 	fmt.Printf("Git problem: %s", err)
+	// }
+
+	checkout := exec.Command("git", "checkout", branchName)
+	err = checkout.Run()
+	if err != nil {
+		fmt.Printf("Git problem: %s", err)
+	}
 }
 
 func deleteLocalBranches(config *Config) {
@@ -194,7 +249,7 @@ func fetchJiraInfo(issueKey string, config *Config) (title, status string, err e
 		return "", "", err
 	}
 
-	return issue.Fields.Description, issue.Fields.Status.Name, nil
+	return issue.Fields.Summary, issue.Fields.Status.Name, nil
 }
 
 func (b Branch) jiraIssueKey(pattern string) string {
