@@ -195,9 +195,7 @@ func showUserSelection(branches []*Branch) bool {
 	}).SetSelectedFunc(func(row int, column int) {
 		branches[row].SelectedForDelete = !branches[row].SelectedForDelete
 
-		table.GetCell(row, 0).
-			SetText(getSelectedText(branches[row].SelectedForDelete)).
-			SetTextColor(getSelectedTextColor(branches[row].SelectedForDelete))
+		updateSelectedCell(table.GetCell(row, 0), branches[row].SelectedForDelete)
 	})
 
 	frame := tview.NewFrame(table).
@@ -219,12 +217,24 @@ func getSelectedText(selected bool) string {
 	}
 }
 
+func updateSelectedCell(cell *tview.TableCell, selected bool) {
+	if selected {
+		cell.SetText("X")
+		cell.SetTextColor(tcell.ColorRed)
+	} else {
+		cell.SetText(" ")
+		cell.SetTextColor(tcell.ColorBlack)
+	}
+
+	cell.SetBackgroundColor(tcell.ColorBlack)
+}
+
 func getSelectedTextColor(selected bool) tcell.Color {
 	if selected {
 		return tcell.ColorRed
 	}
 
-	return tcell.ColorWhite
+	return tcell.ColorBlack
 }
 
 func newStatusCell(status string) *tview.TableCell {
