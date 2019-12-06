@@ -57,7 +57,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	showUserSelection(branches)
+	cancelled := showUserSelection(branches)
+	if cancelled {
+		os.Exit(1)
+	}
+
 	err = deleteSelectedBranches(repo, branches)
 	if err != nil {
 		fmt.Printf("Error deleting branch(es): %s", err)
@@ -159,7 +163,8 @@ func (b Branch) DisplayName() string {
 	return strings.TrimPrefix(b.Name.String(), gitBranchRefPrefix)
 }
 
-func showUserSelection(branches []*Branch) {
+func showUserSelection(branches []*Branch) bool {
+	userCancelled := true
 	app := tview.NewApplication()
 
 	table := tview.NewTable().
@@ -184,6 +189,7 @@ func showUserSelection(branches []*Branch) {
 
 	table.Select(0, 0).SetFixed(1, 1).SetDoneFunc(func(key tcell.Key) {
 		if key == tcell.KeyEscape {
+			userCancelled = false
 			app.Stop()
 		}
 	}).SetSelectedFunc(func(row int, column int) {
@@ -201,6 +207,8 @@ func showUserSelection(branches []*Branch) {
 	if err := app.SetRoot(frame, true).SetFocus(frame).Run(); err != nil {
 		panic(err)
 	}
+
+	return userCancelled
 }
 
 func getSelectedText(selected bool) string {
