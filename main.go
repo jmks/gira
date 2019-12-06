@@ -120,9 +120,13 @@ func deleteLocalBranches(config *Config) {
 		os.Exit(1)
 	}
 
-	err = addBranchStatusFromJira(branches, config)
-	if err != nil {
-		fmt.Printf("Error requesting Jira informtion: %s", err)
+	for _, branch := range branches {
+		_, status, err := fetchJiraInfo(branch.jiraIssueKey(config.issuePattern), config)
+		if err != nil {
+			fmt.Printf("Error requesting Jira informtion: %s", err)
+		}
+
+		branch.JiraStatus = status
 	}
 
 	cancelled := showUserSelection(branches)
@@ -170,9 +174,9 @@ func getBranches(repo *git.Repository) ([]*Branch, error) {
 	return branches, nil
 }
 
-func addBranchStatusFromJira(branches []*Branch, config *Config) error {
-	if !config.HasJira() {
-		return nil
+func fetchJiraInfo(issueKey string, config *Config) (title, status string, err error) {
+	if !config.HasJira() || config.issuePattern == "" || issueKey == "" {
+		return "", "", nil
 	}
 
 	basicAuth := jira.BasicAuthTransport{
@@ -182,28 +186,15 @@ func addBranchStatusFromJira(branches []*Branch, config *Config) error {
 
 	client, err := jira.NewClient(basicAuth.Client(), config.jiraURL)
 	if err != nil {
-		return err
+		return "", "", err
 	}
 
-	for _, branch := range branches {
-		if config.issuePattern == "" {
-			continue
-		}
-
-		key := branch.jiraIssueKey(config.issuePattern)
-		if key == "" {
-			continue
-		}
-
-		issue, _, err := client.Issue.Get(key, &jira.GetQueryOptions{})
-		if err != nil {
-			return err
-		}
-
-		branch.JiraStatus = issue.Fields.Status.Name
+	issue, _, err := client.Issue.Get(issueKey, &jira.GetQueryOptions{})
+	if err != nil {
+		return "", "", err
 	}
 
-	return nil
+	return issue.Fields.Description, issue.Fields.Status.Name, nil
 }
 
 func (b Branch) jiraIssueKey(pattern string) string {
