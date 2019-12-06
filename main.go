@@ -37,31 +37,20 @@ type Branch struct {
 func main() {
 	config := readConfiguration()
 
-	repo, err := gitRepository()
-	if err != nil {
-		fmt.Printf("Git problem: %s", err)
-		os.Exit(1)
-	}
-	branches, err := getBranches(repo)
-	if err != nil {
-		fmt.Printf("Git problem: %s", err)
-		os.Exit(1)
+	// TODO: replace with cobra?
+	command := "delete"
+
+	if len(os.Args) > 1 {
+		command = os.Args[1]
 	}
 
-	err = addBranchStatusFromJira(branches, config)
-	if err != nil {
-		fmt.Printf("Error requesting Jira informtion: %s", err)
-	}
-
-	cancelled := showUserSelection(branches)
-	if cancelled {
-		os.Exit(1)
-	}
-
-	err = deleteSelectedBranches(repo, branches)
-	if err != nil {
-		fmt.Printf("Error deleting branch(es): %s", err)
-		os.Exit(1)
+	switch command {
+	case "delete":
+		deleteLocalBranches(config)
+	case "branch":
+		createLocalBranchFromJiraIssue(config)
+	default:
+		fmt.Printf("Unknown command '%s'\n", command)
 	}
 }
 
@@ -98,6 +87,54 @@ func withGiraPrefix(s string) string {
 
 func (c Config) HasJira() bool {
 	return c.jiraToken != "" && c.jiraUser != "" && c.jiraURL != ""
+}
+
+func createLocalBranchFromJiraIssue(config *Config) {
+	jiraTicket := ""
+	if len(os.Args) >= 3 {
+		jiraTicket = os.Args[2]
+	}
+
+	if jiraTicket == "" {
+		fmt.Println("The branch command requires a Jira issue key")
+		os.Exit(1)
+	}
+
+	if !config.HasJira() {
+		fmt.Println("Jira configuration required")
+		os.Exit(1)
+	}
+
+	fmt.Printf("TODO: create branj for jira issue %s\n", jiraTicket)
+}
+
+func deleteLocalBranches(config *Config) {
+	repo, err := gitRepository()
+	if err != nil {
+		fmt.Printf("Git problem: %s", err)
+		os.Exit(1)
+	}
+	branches, err := getBranches(repo)
+	if err != nil {
+		fmt.Printf("Git problem: %s", err)
+		os.Exit(1)
+	}
+
+	err = addBranchStatusFromJira(branches, config)
+	if err != nil {
+		fmt.Printf("Error requesting Jira informtion: %s", err)
+	}
+
+	cancelled := showUserSelection(branches)
+	if cancelled {
+		os.Exit(1)
+	}
+
+	err = deleteSelectedBranches(repo, branches)
+	if err != nil {
+		fmt.Printf("Error deleting branch(es): %s", err)
+		os.Exit(1)
+	}
 }
 
 func gitRepository() (*git.Repository, error) {
@@ -240,6 +277,7 @@ func getSelectedText(selected bool) string {
 	}
 }
 
+// TODO: refactor to use this when creating cell
 func updateSelectedCell(cell *tview.TableCell, selected bool) {
 	if selected {
 		cell.SetText("X")
