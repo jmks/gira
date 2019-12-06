@@ -230,9 +230,9 @@ func showUserSelection(branches []*Branch) bool {
 	for r := 0; r < len(branches); r++ {
 		branch := branches[r]
 
-		selectionCell := tview.NewTableCell(getSelectedText(branch.SelectedForDelete)).
-			SetTextColor(getSelectedTextColor(branch.SelectedForDelete)).
-			SetAlign(tview.AlignLeft)
+		selectionCell := tview.NewTableCell("").SetAlign(tview.AlignLeft)
+		decorateSelectedCell(selectionCell, branch.SelectedForDelete)
+
 		branchCell := tview.NewTableCell(branch.DisplayName()).
 			SetTextColor(tcell.ColorWhite).
 			SetAlign(tview.AlignLeft).
@@ -251,7 +251,7 @@ func showUserSelection(branches []*Branch) bool {
 	}).SetSelectedFunc(func(row int, column int) {
 		branches[row].SelectedForDelete = !branches[row].SelectedForDelete
 
-		updateSelectedCell(table.GetCell(row, 0), branches[row].SelectedForDelete)
+		decorateSelectedCell(table.GetCell(row, 0), branches[row].SelectedForDelete)
 	})
 
 	frame := tview.
@@ -269,16 +269,7 @@ func showUserSelection(branches []*Branch) bool {
 	return userCancelled
 }
 
-func getSelectedText(selected bool) string {
-	if selected {
-		return "X"
-	} else {
-		return " "
-	}
-}
-
-// TODO: refactor to use this when creating cell
-func updateSelectedCell(cell *tview.TableCell, selected bool) {
+func decorateSelectedCell(cell *tview.TableCell, selected bool) {
 	if selected {
 		cell.SetText("X")
 		cell.SetTextColor(tcell.ColorRed)
@@ -288,14 +279,6 @@ func updateSelectedCell(cell *tview.TableCell, selected bool) {
 	}
 
 	cell.SetBackgroundColor(tcell.ColorBlack)
-}
-
-func getSelectedTextColor(selected bool) tcell.Color {
-	if selected {
-		return tcell.ColorRed
-	}
-
-	return tcell.ColorBlack
 }
 
 func newStatusCell(status string) *tview.TableCell {
