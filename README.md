@@ -32,6 +32,7 @@ Currently requires the following environment variables to be set up:
 * Move branch naming pattern to configuration
 * Update README with gif
 * Add more tests :crying_cat_face:
+* configure command to set configuration
 
 ## License
 
