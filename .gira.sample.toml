@@ -1,0 +1,4 @@
+jira_issue_pattern = "PROJECT-[[:digit:]]+"
+jira_user = "email@example.com"
+jira_url = "https://example.atlassian.net"
+jira_token = "maybe-dont-hardcode-this"

@@ -13,9 +13,11 @@ Even if Jira is not configured, or the branch is not tracked in Jira, `gira` can
 
 ![](/screenshot.png?raw=true "Selection screen")
 
-## Environment Variables
+## Configuration
 
-Currently requires the following environment variables to be set up:
+Configure with Environment Variables or a Configuration File. Note that the Environment values will override the Configuration File values.
+
+### Environment Variables
 
 | Variable                | Value                                                                                                                 |
 | -------------           | -------------                                                                                                         |
@@ -23,6 +25,16 @@ Currently requires the following environment variables to be set up:
 | GIRA_JIRA_TOKEN         | Jira API TOKEN                                                                                                        |
 | GIRA_JIRA_USER          | User of the Jira API token e.g. an email address                                                                      |
 | GIRA_JIRA_URL           | Jira base URL e.g. https://issues.apache.org/jira/                                                                    |
+
+### Configuration File
+
+Uses the configuration file `.gira.toml` (technically, the format can be any understood by [viper](https://github.com/spf13/viper#reading-config-files)).
+
+`gira` will first look in the current directory for `./.gira.toml`, then at `$HOME/.config/.gira.toml`.
+
+Look at the TOML [sample](/.gira.sample.toml).
+
+Note that if you copy the example, to rename the file as described above, e.g. `cp .gira.sample.toml ./.gira.toml`
 
 ## TODO
 
