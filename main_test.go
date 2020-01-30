@@ -20,9 +20,14 @@ func TestConfiguration(t *testing.T) {
 		}
 
 		for _, test := range tests {
-			result := newConfig("", test.token, test.user, test.url).HasJira()
-			if result != test.valid {
-				t.Errorf("HashJira() wanted: %t, got: %t", test.valid, result)
+			result := Config{
+				issuePattern: "",
+				jiraToken:    test.token,
+				jiraUser:     test.user,
+				jiraURL:      test.url,
+			}
+			if result.HasJira() != test.valid {
+				t.Errorf("HashJira() wanted: %t, got: %t", test.valid, result.HasJira())
 			}
 		}
 	})
