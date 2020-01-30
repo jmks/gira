@@ -45,3 +45,23 @@ func TestBranch(t *testing.T) {
 		}
 	})
 }
+
+func TestJiraTitleToBranchName(t *testing.T) {
+	tests := []struct {
+		title     string
+		prefix    string
+		delimiter string
+		want      string
+	}{
+		{"Hello World", "P", "-", "P-hello-world"},
+		{"Extra  Space", "P", "-", "P-extra-space"},
+	}
+
+	for _, test := range tests {
+		got := formatBranchName(test.title, test.prefix, test.delimiter)
+
+		if got != test.want {
+			t.Errorf("Wanted %s, got %s", test.want, got)
+		}
+	}
+}

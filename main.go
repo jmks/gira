@@ -113,10 +113,7 @@ func createLocalBranchFromJiraIssue(config *Config) {
 		fmt.Printf("Error fetching issue %s from Jira: %s\n", issueKey, err)
 	}
 
-	delimiter := "-"
-	nonChars := regexp.MustCompile("[^A-Za-z0-9]")
-	normalizedTitle := nonChars.ReplaceAllLiteralString(title, delimiter)
-	branchName := issueKey + delimiter + strings.ReplaceAll(strings.ToLower(normalizedTitle), " ", delimiter)
+	branchName := formatBranchName(title, issueKey, "-")
 
 	repo, err := gitRepository()
 	if err != nil {
@@ -161,6 +158,15 @@ func createLocalBranchFromJiraIssue(config *Config) {
 	if err != nil {
 		fmt.Printf("Git problem: %s", err)
 	}
+}
+
+func formatBranchName(title, prefix, delimiter string) string {
+	nonChars := regexp.MustCompile("[^A-Za-z0-9]")
+	repeatedSpaces := regexp.MustCompile("\\s{2,}")
+	cleanedTitle := nonChars.ReplaceAllLiteralString(title, " ")
+	normalizedTitle := repeatedSpaces.ReplaceAllLiteralString(cleanedTitle, " ")
+
+	return prefix + delimiter + strings.ReplaceAll(strings.ToLower(normalizedTitle), " ", delimiter)
 }
 
 func deleteLocalBranches(config *Config) {
