@@ -134,25 +134,6 @@ func createLocalBranchFromJiraIssue(config *Config) {
 		fmt.Printf("Git problem: %s", err)
 	}
 
-	// This currently hangs the app
-	// Seems like a go-git bug
-	//
-	// worktree, err := repo.Worktree()
-	// if err != nil {
-	// 	fmt.Printf("Git problem: %s", err)
-	// }
-
-	// fmt.Println("Starting checkout...")
-
-	// err = worktree.Checkout(&git.CheckoutOptions{
-	// 	Branch: newBranchRefName,
-	// })
-
-	// fmt.Println("Done checkout...")
-	// if err != nil {
-	// 	fmt.Printf("Git problem: %s", err)
-	// }
-
 	checkout := exec.Command("git", "checkout", branchName)
 	err = checkout.Run()
 	if err != nil {
