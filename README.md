@@ -40,7 +40,6 @@ Note that if you copy the example, to rename the file as described above, e.g. `
 
 * When creating a branch name, if last char is special character, the branch should not end with the delimiter `TASS-some-branch-`
 * Add a log to a file
-* Does api not work with TASS issues?
 * Create a [worker pool](https://gobyexample.com/worker-pools) for Jira requests
 * Show `git ls-remotes` info in delete UI
 * Move branch delimiter to configuration

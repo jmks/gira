@@ -261,7 +261,7 @@ func fetchJiraInfo(issueKey string, config *Config) (title, status string, err e
 func (b Branch) jiraIssueKey(pattern string) string {
 	re := regexp.MustCompile(pattern)
 
-	found := re.Find([]byte(b.Name.String()))
+	found := re.Find([]byte(b.DisplayName()))
 
 	return string(found)
 }
