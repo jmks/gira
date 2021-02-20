@@ -55,6 +55,7 @@ func TestJiraTitleToBranchName(t *testing.T) {
 	}{
 		{"Hello World", "P", "-", "P-hello-world"},
 		{"Extra  Space", "P", "-", "P-extra-space"},
+		{"Hello world!", "P", "-", "P-hello-world"},
 	}
 
 	for _, test := range tests {

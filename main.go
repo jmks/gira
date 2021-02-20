@@ -165,6 +165,7 @@ func formatBranchName(title, prefix, delimiter string) string {
 	repeatedSpaces := regexp.MustCompile("\\s{2,}")
 	cleanedTitle := nonChars.ReplaceAllLiteralString(title, " ")
 	normalizedTitle := repeatedSpaces.ReplaceAllLiteralString(cleanedTitle, " ")
+	normalizedTitle = strings.TrimSuffix(normalizedTitle, " ")
 
 	return prefix + delimiter + strings.ReplaceAll(strings.ToLower(normalizedTitle), " ", delimiter)
 }
