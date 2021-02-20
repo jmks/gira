@@ -117,13 +117,13 @@ func createLocalBranchFromJiraIssue(config *Config) {
 
 	repo, err := gitRepository()
 	if err != nil {
-		fmt.Printf("Git problem: %s", err)
+		fmt.Printf("Git problem: %s\n", err)
 		os.Exit(1)
 	}
 
 	headRef, err := repo.Head()
 	if err != nil {
-		fmt.Printf("Git problem: %s", err)
+		fmt.Printf("Git problem: %s\n", err)
 		os.Exit(1)
 	}
 
@@ -131,13 +131,13 @@ func createLocalBranchFromJiraIssue(config *Config) {
 	newRef := plumbing.NewHashReference(newBranchRefName, headRef.Hash())
 	err = repo.Storer.SetReference(newRef)
 	if err != nil {
-		fmt.Printf("Git problem: %s", err)
+		fmt.Printf("Git problem: %s\n", err)
 	}
 
 	checkout := exec.Command("git", "checkout", branchName)
 	err = checkout.Run()
 	if err != nil {
-		fmt.Printf("Git problem: %s", err)
+		fmt.Printf("Git problem: %s\n", err)
 	}
 }
 
@@ -154,19 +154,19 @@ func formatBranchName(title, prefix, delimiter string) string {
 func deleteLocalBranches(config *Config) {
 	repo, err := gitRepository()
 	if err != nil {
-		fmt.Printf("Git problem: %s", err)
+		fmt.Printf("Git problem: %s\n", err)
 		os.Exit(1)
 	}
 	branches, err := getBranches(repo)
 	if err != nil {
-		fmt.Printf("Git problem: %s", err)
+		fmt.Printf("Git problem: %s\n", err)
 		os.Exit(1)
 	}
 
 	for _, branch := range branches {
 		_, status, err := fetchJiraInfo(branch.jiraIssueKey(config.issuePattern), config)
 		if err != nil {
-			fmt.Printf("Error requesting Jira informtion: %s", err)
+			fmt.Printf("Error requesting Jira informtion: %s\n", err)
 		}
 
 		branch.JiraStatus = status
@@ -179,7 +179,7 @@ func deleteLocalBranches(config *Config) {
 
 	err = deleteSelectedBranches(repo, branches)
 	if err != nil {
-		fmt.Printf("Error deleting branch(es): %s", err)
+		fmt.Printf("Error deleting branch(es): %s\n", err)
 		os.Exit(1)
 	}
 }
