@@ -39,6 +39,7 @@ Note that if you copy the example, to rename the file as described above, e.g. `
 ## TODO
 
 * Add a log to a file
+* Add config/option to skip certain branches (e.g. `master,main,dev,prod`)
 * Create a [worker pool](https://gobyexample.com/worker-pools) for Jira requests
 * Show `git ls-remotes` info in delete UI
 * Move branch delimiter to configuration
